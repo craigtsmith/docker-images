@@ -6,10 +6,10 @@ on:
       - main
 
 jobs:
-  build-and-push:
+  determine-builds:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ needs.build-and-push.outputs.matrix }}
+      matrix: ${{ needs.determine-builds.outputs.matrix }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -27,14 +27,14 @@ jobs:
 
       - name: Print matrix
         run: |
-          echo 'Matrix: ${{ needs.build-and-push.outputs.matrix }}'
+          echo 'Matrix: ${{ needs.determine-builds.outputs.matrix }}'
 
   build:
-    if: needs.build-and-push.outputs.matrix != '[]'
-    needs: build-and-push
+    if: needs.determine-builds.outputs.matrix != '[]'
+    needs: determine-builds
     runs-on: ubuntu-latest
     strategy:
-      matrix: ${{fromJson(needs.build-and-push.outputs.matrix)}}
+      matrix: ${{fromJson(needs.determine-builds.outputs.matrix)}}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
