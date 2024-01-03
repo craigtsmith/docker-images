@@ -22,10 +22,12 @@ jobs:
           changed_dirs=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'Dockerfile' | xargs -r -L1 dirname | uniq)
           echo "Changed directories: $changed_dirs"
           if [ -z "$changed_dirs" ]; then
-            echo "::set-output name=matrix::{\"include\":[]}"  # Ensure valid JSON for an empty list
+            echo "::set-output name=matrix::{\"include\":[]}"
+            echo "No changes in Dockerfile directories."
           else
             json_matrix=$(echo "$changed_dirs" | jq -R 'split(" ") | map({context: .}) | { include: . }')
             echo "::set-output name=matrix::$json_matrix"
+            echo "Matrix JSON: $json_matrix"
           fi
 
       - name: Print matrix
