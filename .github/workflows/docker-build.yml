@@ -9,7 +9,7 @@ jobs:
   determine-builds:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ needs.determine-builds.outputs.matrix }}
+      matrix: ${{ steps.find-dockerfiles.outputs.matrix }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -17,28 +17,27 @@ jobs:
           fetch-depth: 10 # Fetch the last 10 commits.
 
       - name: Find changed directories with Dockerfiles
+        id: find-dockerfiles
         run: |
           echo "Changed directories:"
           changed_dirs=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'Dockerfile' | xargs -r -L1 dirname | uniq)
           echo "$changed_dirs"
           if [ -z "$changed_dirs" ]; then
-            # Create an empty JSON array using jq and write it to the environment file
-            echo '[]' | jq -R '{include: .}' >> $GITHUB_OUTPUT
+            echo "::set-output name=matrix::{\"include\":[]}"
             echo "No changes in Dockerfile directories."
           else
-            # Create a JSON array of the changed directories using jq and write it to the environment file
-            json_matrix=$(echo "$changed_dirs" | jq -R 'split(" ") | map({context: .}) | {include: .}')
-            echo "MATRIX_JSON=$json_matrix" >> $GITHUB_OUTPUT
+            json_matrix=$(echo "$changed_dirs" | jq -R 'split(" ") | map(select(. != "")) | map({context: .}) | {include: .}' | jq -c .)
+            echo "::set-output name=matrix::$json_matrix"
             echo "Generated matrix JSON:"
             echo "$json_matrix"
           fi
-
   build:
-    if: ${{ needs.determine-builds.outputs.MATRIX_JSON }} != '{"include":[]}'
     needs: determine-builds
     runs-on: ubuntu-latest
+    if: ${{ fromJson(needs.determine-builds.outputs.matrix).include }}
     strategy:
-      matrix: ${{fromJson(needs.determine-builds.outputs.MATRIX_JSON)}}
+      fail-fast: false
+      matrix: ${{fromJson(needs.determine-builds.outputs.matrix)}}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
