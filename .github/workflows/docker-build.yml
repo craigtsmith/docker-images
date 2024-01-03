@@ -19,12 +19,12 @@ jobs:
       - name: Find changed directories with Dockerfiles
         id: find-dockerfiles
         run: |
-          changed_dirs=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'Dockerfile' | xargs -L1 dirname | uniq)
+          changed_dirs=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'Dockerfile' | xargs -r -L1 dirname | uniq)
           echo "Changed directories: $changed_dirs"
           if [ -z "$changed_dirs" ]; then
             echo "::set-output name=matrix::[]"
           else
-            echo "::set-output name=matrix::$(echo $changed_dirs | jq -R 'split(" ") | map({context: .}) | { include: . }')"
+            echo "::set-output name=matrix::$(echo "$changed_dirs" | jq -R 'split(" ") | map({context: .}) | { include: . }')"
           fi
 
       - name: Print matrix
