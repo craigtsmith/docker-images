@@ -19,27 +19,31 @@ jobs:
       - name: Find changed directories with Dockerfiles
         id: find-dockerfiles
         run: |
+          echo "Changed directories:"
           changed_dirs=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'Dockerfile' | xargs -r -L1 dirname | uniq)
-          echo "Changed directories: $changed_dirs"
+          echo "$changed_dirs"
           if [ -z "$changed_dirs" ]; then
-            echo "::set-output name=matrix::{\"include\":[]}"
+            # Create an empty JSON array using jq and write it to the environment file
+            echo '[]' | jq -R '{include: .}' >> $GITHUB_OUTPUT
             echo "No changes in Dockerfile directories."
           else
-            json_matrix=$(echo "$changed_dirs" | jq -R 'split(" ") | map({context: .}) | { include: . }')
-            echo "::set-output name=matrix::$json_matrix"
-            echo "Matrix JSON: $json_matrix"
+            # Create a JSON array of the changed directories using jq and write it to the environment file
+            json_matrix=$(echo "$changed_dirs" | jq -R 'split(" ") | map({context: .}) | {include: .}')
+            echo "MATRIX_JSON=$json_matrix" >> $GITHUB_OUTPUT
+            echo "Generated matrix JSON:"
+            echo "$json_matrix"
           fi
 
       - name: Print matrix
         run: |
-          echo 'Matrix: ${{ needs.determine-builds.outputs.matrix }}'
+          echo "Matrix: $MATRIX_JSON"
 
   build:
-    if: ${{ needs.determine-builds.outputs.matrix }} != '{"include":[]}'
+    if: ${{ needs.determine-builds.outputs.MATRIX_JSON }} != '{"include":[]}'
     needs: determine-builds
     runs-on: ubuntu-latest
     strategy:
-      matrix: ${{fromJson(needs.determine-builds.outputs.matrix)}}
+      matrix: ${{fromJson(needs.determine-builds.outputs.MATRIX_JSON)}}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
