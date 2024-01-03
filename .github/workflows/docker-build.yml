@@ -19,9 +19,18 @@ jobs:
         run: |
           changed_dirs=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'Dockerfile' | xargs -L1 dirname | uniq)
           echo "Changed directories: $changed_dirs"
-          echo "::set-output name=matrix::$(echo $changed_dirs | jq -R 'split(" ") | map({context: .}) | { include: . }')"
+          if [ -z "$changed_dirs" ]; then
+            echo "::set-output name=matrix::[]"
+          else
+            echo "::set-output name=matrix::$(echo $changed_dirs | jq -R 'split(" ") | map({context: .}) | { include: . }')"
+          fi
+
+      - name: Print matrix
+        run: |
+          echo 'Matrix: ${{ needs.build-and-push.outputs.matrix }}'
 
   build:
+    if: needs.build-and-push.outputs.matrix != '[]'
     needs: build-and-push
     runs-on: ubuntu-latest
     strategy:
