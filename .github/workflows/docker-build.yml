@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 10 # Fetch the last 10 commits.
 
       - name: Find changed directories with Dockerfiles
         id: find-dockerfiles
