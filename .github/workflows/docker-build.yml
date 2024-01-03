@@ -17,7 +17,6 @@ jobs:
           fetch-depth: 10 # Fetch the last 10 commits.
 
       - name: Find changed directories with Dockerfiles
-        id: find-dockerfiles
         run: |
           echo "Changed directories:"
           changed_dirs=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'Dockerfile' | xargs -r -L1 dirname | uniq)
@@ -33,10 +32,6 @@ jobs:
             echo "Generated matrix JSON:"
             echo "$json_matrix"
           fi
-
-      - name: Print matrix
-        run: |
-          echo "Matrix: $MATRIX_JSON"
 
   build:
     if: ${{ needs.determine-builds.outputs.MATRIX_JSON }} != '{"include":[]}'
