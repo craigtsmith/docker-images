@@ -22,9 +22,10 @@ jobs:
           changed_dirs=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'Dockerfile' | xargs -r -L1 dirname | uniq)
           echo "Changed directories: $changed_dirs"
           if [ -z "$changed_dirs" ]; then
-            echo "::set-output name=matrix::[]"
+            echo "::set-output name=matrix::{\"include\":[]}"  # Ensure valid JSON for an empty list
           else
-            echo "::set-output name=matrix::$(echo "$changed_dirs" | jq -R 'split(" ") | map({context: .}) | { include: . }')"
+            json_matrix=$(echo "$changed_dirs" | jq -R 'split(" ") | map({context: .}) | { include: . }')
+            echo "::set-output name=matrix::$json_matrix"
           fi
 
       - name: Print matrix
@@ -32,7 +33,7 @@ jobs:
           echo 'Matrix: ${{ needs.determine-builds.outputs.matrix }}'
 
   build:
-    if: needs.determine-builds.outputs.matrix != '[]'
+    if: ${{ needs.determine-builds.outputs.matrix }} != '{"include":[]}'
     needs: determine-builds
     runs-on: ubuntu-latest
     strategy:
