@@ -1,0 +1,49 @@
+name: Dynamic Docker Build and Push
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ needs.build-and-push.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Find changed directories with Dockerfiles
+        id: find-dockerfiles
+        run: |
+          changed_dirs=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'Dockerfile' | xargs -L1 dirname | uniq)
+          echo "Changed directories: $changed_dirs"
+          echo "::set-output name=matrix::$(echo $changed_dirs | jq -R 'split(" ") | map({context: .}) | { include: . }')"
+
+  build:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJson(needs.build-and-push.outputs.matrix)}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/${{ matrix.context }}:latest
