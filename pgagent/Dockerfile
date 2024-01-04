@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
 ENV PGPORT=5432
 ENV PGUSER=postgres
 ENV PGDATABASE=postgres
+ENV PGAGENTLOGLEVEL=1
 
 # Copy the entrypoint script to the container and set executable permissions
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh

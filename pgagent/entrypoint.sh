@@ -7,6 +7,7 @@ echo "PGPORT=${PGPORT}"
 echo "PGDATABASE=${PGDATABASE}"
 echo "PGUSER=${PGUSER}"
 echo "PGPASSWORD set: $([ -n "${PGPASSWORD}" ] && echo "yes" || echo "no")"
+echo "PGAGENTLOGLEVEL=${PGAGENTLOGLEVEL}"
 
 # Attempt to resolve the hostname to ensure network connectivity
 echo "Attempting to resolve the hostname ${PGHOST}"
@@ -48,4 +49,4 @@ fi
 echo "Final connection string: $conn_str"
 
 # Start pgAgent with the connection string and log at debug level
-exec pgagent -f -l 2 $conn_str
+exec pgagent -f -l $PGAGENTLOGLEVEL $conn_str
