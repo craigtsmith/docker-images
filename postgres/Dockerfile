@@ -8,3 +8,5 @@ RUN apt-get update && apt-get install -y \
 
 # Copy supervisord configuration files
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+CMD ["/usr/bin/supervisord"]
