@@ -6,5 +6,5 @@ RUN apt-get update && apt-get install -y \
     supervisor \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy supervisord configuration files
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# # Copy supervisord configuration files
+# COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
