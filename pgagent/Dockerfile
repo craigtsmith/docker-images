@@ -6,6 +6,9 @@ RUN apt-get update && apt-get install -y \
     postgresql-14-pgagent \
     && rm -rf /var/lib/apt/lists/*
 
-# Set the entrypoint to pgagent and pass the connection string as the argument
-ENTRYPOINT ["pgagent"]
-CMD ["-f", "hostaddr=${PGHOST} port=${PGPORT} dbname=${PGDATABASE} user=${PGUSER} password=${PGPASSWORD}"]
+# Copy the entrypoint script to the container
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Set the custom entrypoint script
+ENTRYPOINT ["/entrypoint.sh"]
