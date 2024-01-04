@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     postgresql-14-pgagent \
     dnsutils \
     postgresql-client-14 \
+    net-tools \
     && rm -rf /var/lib/apt/lists/*
 
 # Set default environment variables for PostgreSQL connection
