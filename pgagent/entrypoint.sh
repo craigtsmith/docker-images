@@ -1,13 +1,40 @@
 #!/bin/bash
 # entrypoint.sh
 
+echo "Starting pgAgent with the following environment variables:"
+echo "PGHOST=${PGHOST}"
+echo "PGPORT=${PGPORT}"
+echo "PGDATABASE=${PGDATABASE}"
+echo "PGUSER=${PGUSER}"
+echo "PGPASSWORD set: $([ -n "${PGPASSWORD}" ] && echo "yes" || echo "no")"
+
+# Attempt to resolve the hostname to ensure network connectivity
+echo "Attempting to resolve the hostname ${PGHOST}"
+if host "${PGHOST}"; then
+    echo "Hostname ${PGHOST} resolved successfully."
+else
+    echo "Failed to resolve hostname ${PGHOST}."
+    exit 1
+fi
+
+# Attempt a simple connection to PostgreSQL to ensure connectivity
+echo "Attempting to connect to PostgreSQL at ${PGHOST}:${PGPORT}"
+if pg_isready -h "${PGHOST}" -p "${PGPORT}" -d "${PGDATABASE}" -U "${PGUSER}"; then
+    echo "Connection to PostgreSQL at ${PGHOST}:${PGPORT} successful."
+else
+    echo "Failed to connect to PostgreSQL at ${PGHOST}:${PGPORT}."
+    exit 1
+fi
+
 # Construct the base connection string
 conn_str="hostaddr=${PGHOST} port=${PGPORT} dbname=${PGDATABASE} user=${PGUSER}"
 
-# Check if PGPASSWORD is provided
+# Check if PGPASSWORD is provided and append it to the connection string
 if [ -n "${PGPASSWORD}" ]; then
     conn_str="${conn_str} password=${PGPASSWORD}"
 fi
 
-# Start pgAgent with the connection string
-exec pgagent -f $conn_str
+echo "Final connection string: $conn_str"
+
+# Start pgAgent with the connection string and log at debug level
+exec pgagent -f -l 2 $conn_str
