@@ -15,3 +15,6 @@ RUN chmod +x /usr/local/bin/docker-entrypoint-extension.sh
 
 # Set the custom script as the entrypoint
 ENTRYPOINT ["docker-entrypoint-extension.sh"]
+STOPSIGNAL SIGINT
+EXPOSE 5432
+CMD ["postgres"]
